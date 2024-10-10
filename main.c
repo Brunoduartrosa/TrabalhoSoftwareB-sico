@@ -110,14 +110,14 @@ int main() {
     // Leitura da imagem PPM de entrada
     if (read_ppm("lena.ppm", &input_image) != 0) {
         // Se houver erro ao ler a imagem, imprime mensagem de erro
-        fprintf(stderr, "Error reading the image file.\n");
+        fprintf(stderr, "Erro na leitura do arquivo de imagem.\n");
         return -1;
     }
 
     // Criação da imagem de saída com dimensões 3 vezes maiores que a original
     if (new_ppm(&output_image, input_image.width * 3, input_image.height * 3) != 0) {
         // Se houver erro ao alocar memória para a imagem ampliada, imprime mensagem de erro
-        fprintf(stderr, "Error allocating memory for the zoomed image.\n");
+        fprintf(stderr, "Erro na alocacao de memoria para a imagem ampliada.\n");
         // Libera a memória da imagem original e retorna erro
         free_ppm(&input_image);
         return -1;
@@ -129,7 +129,7 @@ int main() {
    // Grava a imagem ampliada em um arquivo PPM
     if (write_ppm("zoomed_lena.ppm", &output_image) != 0) {
         // Se houver erro ao gravar a imagem, imprime mensagem de erro
-        fprintf(stderr, "Error writing the zoomed image file.\n");
+        fprintf(stderr, "Erro ao gravar a imagem.\n");
         // Se a gravação for bem-sucedida, imprime a mensagem de sucesso e o tamanho da nova imagem
     }else{
         printf("Zoom aplicado com sucesso!\n");

@@ -81,6 +81,9 @@ int main() {
    
     if (write_ppm("zoomed_lena.ppm", &output_image) != 0) {
         fprintf(stderr, "Error writing the zoomed image file.\n");
+    }else{
+        printf("Zoom aplicado com sucesso!\n");
+        printf("Novo tamanho da imagem: %d x %d pixels\n", output_image.width, output_image.height);
     }
 
     

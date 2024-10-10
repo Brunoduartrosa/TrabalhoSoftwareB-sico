@@ -1,90 +1,89 @@
-#include <stdio.h>
 #include <stdlib.h>
-#include "lib_ppm.h" // Biblioteca fornecida para manipulação de imagens PPM
+#include <stdio.h>
+#include "lib_ppm.h"
 
-// Função auxiliar para gerar matriz 3x3 de sub-pixels para um canal de cor
-void gerar_subpixels(unsigned char cor, unsigned char subpixel[3][3]) {
-    if (cor <= 74) {
-        // Todos pretos
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                subpixel[i][j] = 0;
+
+void apply_zoom_pattern(struct pixel_s pixel, struct image_s *output, int x, int y) {
+    int r = pixel.r;
+    int g = pixel.g;
+    int b = pixel.b;
+
+    
+    if (r < 75 && g < 75 && b < 75) {
+        // All sub-pixels are black
+        for (int dy = 0; dy < 3; dy++) {
+            for (int dx = 0; dx < 3; dx++) {
+                output->pix[(y * 3 + dy) * output->width + (x * 3 + dx)] = (struct pixel_s){0, 0, 0};
             }
         }
-    } else if (cor <= 134) {
-        // Apenas o subpixel do meio ligado
-        subpixel[0][0] = subpixel[0][1] = subpixel[0][2] = 0;
-        subpixel[1][0] = subpixel[1][2] = 0;
-        subpixel[1][1] = 1; // Subpixel do meio
-    } else if (cor <= 179) {
-        // Subpixel do meio desligado, os outros dois ligados
-        subpixel[0][0] = subpixel[0][1] = subpixel[0][2] = 1;
-        subpixel[1][1] = 0;
+    } else if (r < 135 && g < 135 && b < 135) {
+        // Middle pixel colored, others black
+        for (int dy = 0; dy < 3; dy++) {
+            for (int dx = 0; dx < 3; dx++) {
+                if (dy == 1 && dx == 1) {
+                    output->pix[(y * 3 + dy) * output->width + (x * 3 + dx)] = pixel;  // Middle sub-pixel
+                } else {
+                    output->pix[(y * 3 + dy) * output->width + (x * 3 + dx)] = (struct pixel_s){0, 0, 0};  // Black
+                }
+            }
+        }
+    } else if (r < 180 && g < 180 && b < 180) {
+        // Outer pixels colored, middle black
+        for (int dy = 0; dy < 3; dy++) {
+            for (int dx = 0; dx < 3; dx++) {
+                if (dy == 1 && dx == 1) {
+                    output->pix[(y * 3 + dy) * output->width + (x * 3 + dx)] = (struct pixel_s){0, 0, 0};  // Middle sub-pixel black
+                } else {
+                    output->pix[(y * 3 + dy) * output->width + (x * 3 + dx)] = pixel;  // Colored
+                }
+            }
+        }
     } else {
-        // Todos ligados
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                subpixel[i][j] = 1;
+        // All sub-pixels are colored
+        for (int dy = 0; dy < 3; dy++) {
+            for (int dx = 0; dx < 3; dx++) {
+                output->pix[(y * 3 + dy) * output->width + (x * 3 + dx)] = pixel;  // All colored
             }
         }
     }
 }
 
-// Função principal de zoom com resolução de sub-pixel
-void aplicar_zoom(struct image_s *image, struct image_s *output_image) {
-    // Alocação da nova imagem com 3x o tamanho da original
-    output_image->width = image->width * 3;
-    output_image->height = image->height * 3;
-    output_image->pix = (struct pixel_s*) malloc(output_image->width * output_image->height * sizeof(struct pixel_s));
 
-    // Processamento de cada pixel da imagem original
-    for (int y = 0; y < image->height; y++) {
-        for (int x = 0; x < image->width; x++) {
-            // Obter o pixel atual
-            struct pixel_s pixel = image->pix[y * image->width + x];
-            
-            // Gerar subpixels para cada cor
-            unsigned char subpixel_r[3][3], subpixel_g[3][3], subpixel_b[3][3];
-            gerar_subpixels(pixel.r, subpixel_r);
-            gerar_subpixels(pixel.g, subpixel_g);
-            gerar_subpixels(pixel.b, subpixel_b);
-
-            // Preencher os subpixels na imagem de saída
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 3; j++) {
-                    int new_x = x * 3 + j;
-                    int new_y = y * 3 + i;
-                    struct pixel_s *new_pixel = &output_image->pix[new_y * output_image->width + new_x];
-
-                    // Configurar as cores do subpixel
-                    new_pixel->r = subpixel_r[i][j] ? 255 : 0;
-                    new_pixel->g = subpixel_g[i][j] ? 255 : 0;
-                    new_pixel->b = subpixel_b[i][j] ? 255 : 0;
-                }
-            }
+void zoom_image(struct image_s *input, struct image_s *output) {
+    for (int y = 0; y < input->height; y++) {
+        for (int x = 0; x < input->width; x++) {
+            struct pixel_s pixel = input->pix[y * input->width + x];
+            apply_zoom_pattern(pixel, output, x, y);
         }
     }
 }
 
 int main() {
-    struct image_s input_image, output_image;
+    struct image_s input_image;
+    struct image_s output_image;
 
-    // Leitura da imagem original
-    if (read_ppm("example.ppm", &input_image) != 0) {
-        printf("Erro ao ler a imagem de entrada.\n");
-        return 1;
+    
+    if (read_ppm("lena.ppm", &input_image) != 0) {
+        fprintf(stderr, "Error reading the image file.\n");
+        return -1;
     }
 
-    // Aplicar zoom com resolução de sub-pixel
-    aplicar_zoom(&input_image, &output_image);
-
-    // Escrita da nova imagem
-    if (write_ppm("input.ppm", &output_image) != 0) {
-        printf("Erro ao escrever a imagem de saída.\n");
-        return 1;
+    
+    if (new_ppm(&output_image, input_image.width * 3, input_image.height * 3) != 0) {
+        fprintf(stderr, "Error allocating memory for the zoomed image.\n");
+        free_ppm(&input_image);
+        return -1;
     }
 
-    // Liberação de memória
+    
+    zoom_image(&input_image, &output_image);
+
+   
+    if (write_ppm("zoomed_lena.ppm", &output_image) != 0) {
+        fprintf(stderr, "Error writing the zoomed image file.\n");
+    }
+
+    
     free_ppm(&input_image);
     free_ppm(&output_image);
 

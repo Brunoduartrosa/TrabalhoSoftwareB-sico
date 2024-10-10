@@ -2,6 +2,8 @@
  * description:   PPM library
  * date:          03/2023
  * author:        Sergio Johann Filho <sergio.johann@acad.pucrs.br>
+ * Source files (.c): Contain the actual implementation of the functions.
+ * contêm 4 funções para trabalhar com imagens ppm
  */
 
 #include <stdlib.h>
@@ -9,6 +11,8 @@
 #include <string.h>
 #include "lib_ppm.h"
 
+/*funcao read: lê uma imagem de um arquivo em formato ppm e carrega na struct image_s
+*/
 int read_ppm(char *file, struct image_s *image)
 {
     FILE *fptr;

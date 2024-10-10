@@ -2,6 +2,8 @@
  * description:   PPM library
  * date:          03/2023
  * author:        Sergio Johann Filho <sergio.johann@acad.pucrs.br>
+ * Header files (.h): Contain declarations (function prototypes, struct definitions, constants, etc.)
+ * arquivo no header file que ajuda ler, escrever e modificar imagens no formato ppm
  */
 
 struct pixel_s {

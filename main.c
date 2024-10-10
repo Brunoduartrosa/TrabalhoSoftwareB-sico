@@ -8,51 +8,85 @@ void apply_zoom_pattern(struct pixel_s pixel, struct image_s *output, int x, int
     int g = pixel.g;
     int b = pixel.b;
 
-    // Verifica as faixas de valores RGB e aplica diferentes padrões de zoom
-    if (r < 75 && g < 75 && b < 75) {
-        // Caso 1: Todos os sub-pixels são pretos se o pixel original é escuro
-        for (int dy = 0; dy < 3; dy++) {
-            for (int dx = 0; dx < 3; dx++) {
-                output->pix[(y * 3 + dy) * output->width + (x * 3 + dx)] = (struct pixel_s){0, 0, 0};
-            }
-        }
-    } else if (r < 135 && g < 135 && b < 135) {
-        // Caso 2: Apenas o pixel do meio é colorido, os outros são pretos
-        for (int dy = 0; dy < 3; dy++) {
-            for (int dx = 0; dx < 3; dx++) {
-                // Aplica a cor original ao pixel do meio
-                if (dy == 1 && dx == 1) {
-                    output->pix[(y * 3 + dy) * output->width + (x * 3 + dx)] = pixel;  // Middle sub-pixel
-                // Todos os outros sub-pixels são pretos
-                } else {
-                    output->pix[(y * 3 + dy) * output->width + (x * 3 + dx)] = (struct pixel_s){0, 0, 0};  // Black
-                }
-            }
-        }
-        // Caso 3: Os pixels externos são coloridos, o do meio é preto
-    } else if (r < 180 && g < 180 && b < 180) {
-        // Outer pixels colored, middle black
-        for (int dy = 0; dy < 3; dy++) {
-            for (int dx = 0; dx < 3; dx++) {
-                // O sub-pixel do meio é preto
-                if (dy == 1 && dx == 1) {
-                    output->pix[(y * 3 + dy) * output->width + (x * 3 + dx)] = (struct pixel_s){0, 0, 0};  // Middle sub-pixel black
-                // Sub-pixels externos são coloridos
-                } else {
-                    output->pix[(y * 3 + dy) * output->width + (x * 3 + dx)] = pixel;  // Colored
-                }
-            }
-        }
-    // Caso 4: Todos os sub-pixels são coloridos
+    // Definição de sub-pixels para o nível de vermelho
+    struct pixel_s r_subpixels[3];
+    if (r < 75) {
+        // Todos os sub-pixels são pretos
+        r_subpixels[0] = (struct pixel_s){0, 0, 0};
+        r_subpixels[1] = (struct pixel_s){0, 0, 0};
+        r_subpixels[2] = (struct pixel_s){0, 0, 0};
+    } else if (r < 135) {
+        // Sub-pixel do meio colorido, outros pretos
+        r_subpixels[0] = (struct pixel_s){0, 0, 0};
+        r_subpixels[1] = (struct pixel_s){r, 0, 0};
+        r_subpixels[2] = (struct pixel_s){0, 0, 0};
+    } else if (r < 180) {
+        // Sub-pixel do meio preto, outros coloridos
+        r_subpixels[0] = (struct pixel_s){r, 0, 0};
+        r_subpixels[1] = (struct pixel_s){0, 0, 0};
+        r_subpixels[2] = (struct pixel_s){r, 0, 0};
     } else {
-        // All sub-pixels are colored
-        for (int dy = 0; dy < 3; dy++) {
-            for (int dx = 0; dx < 3; dx++) {
-                // Todos os sub-pixels recebem a cor original do pixel
-                output->pix[(y * 3 + dy) * output->width + (x * 3 + dx)] = pixel;  // All colored
-            }
-        }
+        // Todos os sub-pixels são coloridos
+        r_subpixels[0] = (struct pixel_s){r, 0, 0};
+        r_subpixels[1] = (struct pixel_s){r, 0, 0};
+        r_subpixels[2] = (struct pixel_s){r, 0, 0};
     }
+
+    // Definição de sub-pixels para o nível de verde
+    struct pixel_s g_subpixels[3];
+    if (g < 75) {
+        g_subpixels[0] = (struct pixel_s){0, 0, 0};
+        g_subpixels[1] = (struct pixel_s){0, 0, 0};
+        g_subpixels[2] = (struct pixel_s){0, 0, 0};
+    } else if (g < 135) {
+        g_subpixels[0] = (struct pixel_s){0, 0, 0};
+        g_subpixels[1] = (struct pixel_s){0, g, 0};
+        g_subpixels[2] = (struct pixel_s){0, 0, 0};
+    } else if (g < 180) {
+        g_subpixels[0] = (struct pixel_s){0, g, 0};
+        g_subpixels[1] = (struct pixel_s){0, 0, 0};
+        g_subpixels[2] = (struct pixel_s){0, g, 0};
+    } else {
+        g_subpixels[0] = (struct pixel_s){0, g, 0};
+        g_subpixels[1] = (struct pixel_s){0, g, 0};
+        g_subpixels[2] = (struct pixel_s){0, g, 0};
+    }
+
+    // Definição de sub-pixels para o nível de azul
+    struct pixel_s b_subpixels[3];
+    if (b < 75) {
+        b_subpixels[0] = (struct pixel_s){0, 0, 0};
+        b_subpixels[1] = (struct pixel_s){0, 0, 0};
+        b_subpixels[2] = (struct pixel_s){0, 0, 0};
+    } else if (b < 135) {
+        b_subpixels[0] = (struct pixel_s){0, 0, 0};
+        b_subpixels[1] = (struct pixel_s){0, 0, b};
+        b_subpixels[2] = (struct pixel_s){0, 0, 0};
+    } else if (b < 180) {
+        b_subpixels[0] = (struct pixel_s){0, 0, b};
+        b_subpixels[1] = (struct pixel_s){0, 0, 0};
+        b_subpixels[2] = (struct pixel_s){0, 0, b};
+    } else {
+        b_subpixels[0] = (struct pixel_s){0, 0, b};
+        b_subpixels[1] = (struct pixel_s){0, 0, b};
+        b_subpixels[2] = (struct pixel_s){0, 0, b};
+    }
+
+    // Aplica os sub-pixels na imagem de saída
+    // Primeiro para o canal vermelho
+    output->pix[(y * 3) * output->width + (x * 3)] = r_subpixels[0];
+    output->pix[(y * 3 + 1) * output->width + (x * 3)] = r_subpixels[1];
+    output->pix[(y * 3 + 2) * output->width + (x * 3)] = r_subpixels[2];
+
+    // Depois para o canal verde
+    output->pix[(y * 3) * output->width + (x * 3 + 1)] = g_subpixels[0];
+    output->pix[(y * 3 + 1) * output->width + (x * 3 + 1)] = g_subpixels[1];
+    output->pix[(y * 3 + 2) * output->width + (x * 3 + 1)] = g_subpixels[2];
+
+    // Finalmente para o canal azul
+    output->pix[(y * 3) * output->width + (x * 3 + 2)] = b_subpixels[0];
+    output->pix[(y * 3 + 1) * output->width + (x * 3 + 2)] = b_subpixels[1];
+    output->pix[(y * 3 + 2) * output->width + (x * 3 + 2)] = b_subpixels[2];
 }
 
 // Função que aplica o zoom em toda a imagem, pixel por pixel
